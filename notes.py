@@ -61,10 +61,14 @@ def simplify(posts):
 
     ret = []
     for li in posts:
+        for r in li.findall("blockquote"):
+            li.remove(r)
+
         o = {
             'type': li.attrib["class"].split()[1],
             'data': list()
         }
+
         if 'original_post' in li.attrib["class"].split():
             o['type'] = 'post'
         for a in li.xpath('.//a')[1:]:
