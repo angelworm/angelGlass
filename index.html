@@ -1,0 +1,77 @@
+<!doctype html>
+<html>
+	<head>
+        <meta charset="UTF-8">
+		<script type="text/javascript" src="lib/jquery-1.10.2.min.js"></script>
+<!--		<script type="text/javascript" src="lib/arbor.js"></script>-->
+<!--		<script type="text/javascript" src="lib/arbor-tween.js"></script>-->
+		<script type="text/javascript" src="lib/springy.js"></script>
+		<script type="text/javascript" src="lib/main.js"></script>
+		<script> // <!--
+var AS = {};
+$(function(){
+  AS = new AG.AngelSight();
+  AS.start();
+});
+		// --> </script>
+        <style>
+            body {
+              margin: 0;
+              padding: 0;
+            }
+            #content {
+              position: absolute;
+              height: 100%;
+              width: 100%;
+              overflow: hidden;
+              margin: 0;
+              padding: 0;
+            }
+            #post-container {
+              position: absolute;
+              height: 100%;
+              width: 250px;
+              top: 0;
+              left: 0;
+              background: rgba(0, 0, 0, 0.55);
+              overflow: scroll;
+              z-index: 12;
+            }
+            #post-container ol {
+              padding: 0;
+            }
+            #post-container ol li {
+              display: block;
+              list-style-type: none;
+              margin: 5px 5px;
+            }
+            #post-container ol li:hover {
+              background: rgba(255, 255, 255, 0.55);
+            }
+            .node-icon {
+              position: absolute;
+            }
+            .node-name {
+              position: absolute;
+              line-height: 10px;
+              font-size: x-small;
+              color: black;
+              text-decoration: none;
+              left: 32px;
+              top: 10px;
+            }
+        </style>
+	</head>
+	<body>
+		<div id="content">
+        <div id="post-container">
+            <form name="blog" action="/" id="form-blog-form">
+                <input type="text" id="form-blog-input" placeholder="ブログ名をいれれれ"/>
+                <input type="submit" value="取る" id="form-blog-submit"/>
+            </form>
+            <ol id="post-list">
+            </ol>
+        </div>
+        </div>
+	</body>
+</html>
