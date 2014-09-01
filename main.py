@@ -138,7 +138,16 @@ class StaticHandler(webapp2.RequestHandler):
         else:
             self.get_local_file(path)
 
+class InitHandler(webapp2.RequestHandler):
+    def get(self):
+        if getAPIkey() == "":
+            TumblrAPI(appkey="hoge").put()
+            self.response.out.write("<h1>fuga</h1>")
+        else:
+            self.response.out.write("<h1>hoge</h1>")
+
 app = webapp2.WSGIApplication([
+    ("/api/init", InitHandler),
     ("/api/post", PostHandler),
     ("/api/note", NoteHandler),
     ("/api/icon", IconHandler),
