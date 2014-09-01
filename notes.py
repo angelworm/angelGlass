@@ -10,9 +10,16 @@ import lxml.html as html
 import re
 
 def fromURL(url):
+    """ url -> (bloghost, postid) """
     return re.search(r"(?:http://)?([\w.-]+)/post/(\d+).*", url, re.U | re.M | re.L | re.I).groups()
 
 def getNotesKey(blog, noteid):
+    """
+    指定されたblogのpostidの記事を取得し、解析する。
+    返り値は(text, (postid, postkey, fromc))
+    postkey: postに対して定まる値。postidと同時に利用する。
+    fromc: notesを取り出す為に必要な値。
+    """
     text = urllib2.urlopen("http://%s/post/%s" % (blog, noteid)).read()
     result = re.search(r"/notes/(\d+)/(\w+)\?from\_c=(\d+)", text, re.U | re.M | re.L | re.I)
     if result is None:
@@ -20,8 +27,9 @@ def getNotesKey(blog, noteid):
     else:
         return text, result.groups()
 
-def getNotes(blog, noteid, note_load_id, from_c=0):
-    text = urllib2.urlopen("http://%s/notes/%s/%s?from_c=%s" % (blog, noteid, note_load_id, from_c)).read().decode('utf-8')
+def getNotes(blog, noteid, post_key, from_c=0):
+    """ bloghost, noteid, postkeyからnotesと次のfrom_cを取得する。from_cが指定された場合はその箇所からのnotesを取得する """
+    text = urllib2.urlopen("http://%s/notes/%s/%s?from_c=%s" % (blog, noteid, post_key, from_c)).read().decode('utf-8')
 
     fromc_match = re.search(r"/notes/\d+/\w+\?from\_c=(\d+)", text, re.U | re.M | re.L | re.I)
     fromc = -1
@@ -31,6 +39,10 @@ def getNotes(blog, noteid, note_load_id, from_c=0):
     return html.fromstring(text), fromc
 
 def notes(blog, noteid):
+    """
+    bloghost, noteidに対応するnoteに与えられたnotesを全て取得する。
+    何回もリクエストを行うため遅い。
+    """
     text, (postid, postkey, fromc) = getNotesKey(blog, noteid)
     ret = []
 
@@ -56,6 +68,9 @@ def notes(blog, noteid):
         return ret
 
 def simplify(posts):
+    """
+    notes()で取得したnotesをシンプルにする。具体的にはblockquoteとかを消す。
+    """
     def getHost(url):
         return re.search(r"(?:http://)?([\w.-]+)/?.*", url, re.U | re.M | re.L | re.I).groups()[0]
 
@@ -81,6 +96,7 @@ def simplify(posts):
     return ret
 
 def getPostNotes(url):
+    """ postのURLからnotesを全て取得する"""
     return simplify(notes(*fromURL(url)))
 
 def main(url):
