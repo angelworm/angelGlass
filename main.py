@@ -97,7 +97,7 @@ class IconHandler(webapp2.RequestHandler):
 
         self.response.out.write(res.read())
 
-class InfoHandler(webapp.RequestHandler):
+class InfoHandler(webapp2.RequestHandler):
     def get():
         blog = self.request.get("blog")
 
