@@ -231,6 +231,11 @@ AG.AngelSight.prototype.postClick = function(event, since) {
                 window.setTimeout(function(){renderPosts(index + 1);}, 200);
             }
 
+            data.reverse();
+            data = data.filter(function(e) {
+                return e.type == "reblog";
+            });
+
             renderPosts(0);
         }
     });
