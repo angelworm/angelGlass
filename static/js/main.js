@@ -19,7 +19,7 @@ AG.Graph = function($base, AS) {
     this.graph = new Springy.Graph();
 
     var self = this;
-    this.layout = new Springy.Layout.ForceDirected(this.graph, 400.0, 400.0, 0.5);
+    this.layout = new Springy.Layout.ForceDirected(this.graph, 400.0, 400.0, 0.2);
     this.renderer = new Springy.Renderer(
         this.layout,
         function(){this.clear.apply(self, arguments);},
@@ -211,9 +211,11 @@ AG.AngelSight.prototype.postClick = function(event, since) {
             url: $li.data('post_url')
         },
         success: function(data) {
-            for(var i = 0, szi = data.length; i < szi; i++) {
-                if(data[i].type == "reblog") {
-                    var link = data[i].data,
+            function renderPosts(index) {
+                if(index >= data.length) return;
+
+                if(data[index].type == "reblog") {
+                    var link = data[index].data,
                         src_data = {host: link[0].user_blog,
                                     name: link[0].user_name},
                         dst_data = {host: link[1].user_blog,
@@ -225,7 +227,11 @@ AG.AngelSight.prototype.postClick = function(event, since) {
                     self.dlIcon(link[0].user_name, link[0].user_blog);
                     self.dlIcon(link[1].user_name, link[1].user_blog);
                 }
+
+                window.setTimeout(function(){renderPosts(index + 1);}, 200);
             }
+
+            renderPosts(0);
         }
     });
 };
