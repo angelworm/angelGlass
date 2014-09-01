@@ -1,7 +1,7 @@
 /**
- * Springy v2.0.1
+ * Springy v2.6.1
  *
- * Copyright (c) 2010 Dennis Hotson
+ * Copyright (c) 2010-2013 Dennis Hotson
  *
  * Permission is hereby granted, free of charge, to any person
  * obtaining a copy of this software and associated documentation
@@ -325,11 +325,12 @@
 
 	// -----------
 	var Layout = Springy.Layout = {};
-	Layout.ForceDirected = function(graph, stiffness, repulsion, damping) {
+	Layout.ForceDirected = function(graph, stiffness, repulsion, damping, minEnergyThreshold) {
 		this.graph = graph;
 		this.stiffness = stiffness; // spring stiffness constant
 		this.repulsion = repulsion; // repulsion constant
 		this.damping = damping; // velocity damping factor
+		this.minEnergyThreshold = minEnergyThreshold || 0.01; //threshold used to determine render stop 
 
 		this.nodePoints = {}; // keep track of points associated with nodes
 		this.edgeSprings = {}; // keep track of springs associated with edges
@@ -483,29 +484,30 @@
 		}), root);
 
 
-	// start simulation
-	Layout.ForceDirected.prototype.start = function(render, done) {
+	/**
+	 * Start simulation if it's not running already.
+	 * In case it's running then the call is ignored, and none of the callbacks passed is ever executed.
+	 */
+	Layout.ForceDirected.prototype.start = function(render, onRenderStop, onRenderStart) {
 		var t = this;
 
 		if (this._started) return;
 		this._started = true;
 		this._stop = false;
 
+		if (onRenderStart !== undefined) { onRenderStart(); }
+
 		Springy.requestAnimationFrame(function step() {
-			t.applyCoulombsLaw();
-			t.applyHookesLaw();
-			t.attractToCentre();
-			t.updateVelocity(0.03);
-			t.updatePosition(0.03);
+			t.tick(0.03);
 
 			if (render !== undefined) {
 				render();
 			}
 
 			// stop simulation when energy of the system goes below a threshold
-			if (t._stop || t.totalEnergy() < 0.01) {
+			if (t._stop || t.totalEnergy() < t.minEnergyThreshold) {
 				t._started = false;
-				if (done !== undefined) { done(); }
+				if (onRenderStop !== undefined) { onRenderStop(); }
 			} else {
 				Springy.requestAnimationFrame(step);
 			}
@@ -515,6 +517,14 @@
 	Layout.ForceDirected.prototype.stop = function() {
 		this._stop = true;
 	}
+
+	Layout.ForceDirected.prototype.tick = function(timestep) {
+		this.applyCoulombsLaw();
+		this.applyHookesLaw();
+		this.attractToCentre();
+		this.updateVelocity(timestep);
+		this.updatePosition(timestep);
+	};
 
 	// Find the nearest point to a particular position
 	Layout.ForceDirected.prototype.nearest = function(pos) {
@@ -625,12 +635,18 @@
 	// 	return Math.abs(ac.x * n.x + ac.y * n.y);
 	// };
 
-	// Renderer handles the layout rendering loop
-	var Renderer = Springy.Renderer = function(layout, clear, drawEdge, drawNode) {
+	/**
+	 * Renderer handles the layout rendering loop
+	 * @param onRenderStop optional callback function that gets executed whenever rendering stops.
+	 * @param onRenderStart optional callback function that gets executed whenever rendering starts.
+	 */
+	var Renderer = Springy.Renderer = function(layout, clear, drawEdge, drawNode, onRenderStop, onRenderStart) {
 		this.layout = layout;
 		this.clear = clear;
 		this.drawEdge = drawEdge;
 		this.drawNode = drawNode;
+		this.onRenderStop = onRenderStop;
+		this.onRenderStart = onRenderStart;
 
 		this.layout.graph.addGraphListener(this);
 	}
@@ -639,7 +655,17 @@
 		this.start();
 	};
 
-	Renderer.prototype.start = function() {
+	/**
+	 * Starts the simulation of the layout in use.
+	 *
+	 * Note that in case the algorithm is still or already running then the layout that's in use
+	 * might silently ignore the call, and your optional <code>done</code> callback is never executed.
+	 * At least the built-in ForceDirected layout behaves in this way.
+	 *
+	 * @param done An optional callback function that gets executed when the springy algorithm stops,
+	 * either because it ended or because stop() was called.
+	 */
+	Renderer.prototype.start = function(done) {
 		var t = this;
 		this.layout.start(function render() {
 			t.clear();
@@ -651,7 +677,7 @@
 			t.layout.eachNode(function(node, point) {
 				t.drawNode(node, point.p);
 			});
-		});
+		}, this.onRenderStop, this.onRenderStart);
 	};
 
 	Renderer.prototype.stop = function() {
